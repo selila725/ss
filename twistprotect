@@ -1,0 +1,34 @@
+#!/bin/bash
+
+date="$(date +%Y-%m-%d-%H:%M:%S)"
+echo -e "# [\033[34;1mTWIST Shadowsocks-libev Service Protect Services\033[0m]"
+
+twistlog(){
+    [ -e /var/log/twist ] || touch /var/log/twist
+    echo "# ${date} ${1} " >> /var/log/twist
+}
+
+twistprotect(){
+    echo -e "# \033[32;1mTWIST Shadowsocks Protect Services Enabled \033[0m"
+    if [ "$(ps -ef | grep -v grep | grep -i "/usr/local/bin/ss-server" | awk '{print $2}')" = "" ]; then
+        echo -e "# \033[31;1mShadowsocks-libev Service Stopped Detected \033[0m"
+        twistlog "Shadowsocks-libev Service Stopped Detected"
+        /usr/bin/twist restart
+        if [ "$(ps -ef | grep -v grep | grep -i "/usr/local/bin/ss-server" | awk '{print $2}')" = "" ]; then
+            twistlog "Shadowsocks-libev Service Restart Failed"
+            twistlog "[Shadowsocks Protect Services Disabled Due To Error]"
+            rm -f /etc/twist/twistprotect
+        else
+            twistlog "Shadowsocks-libev Service Restart Success"
+        fi
+    else
+        echo -e "# \033[32;1mShadowsocks-libev Service Running Detected \033[0m"
+    fi
+}
+
+if [ -e /etc/twist/twistprotect ]; then
+    twistprotect
+else
+    echo -e "# \033[31;1mTWIST Shadowsocks Protect Services Disabled \033[0m"
+fi
+
